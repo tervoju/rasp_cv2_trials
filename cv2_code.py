@@ -1,6 +1,25 @@
+from ssl import SSL_ERROR_INVALID_ERROR_CODE
 import cv2
 import time
 import numpy as np
+import smtplib
+
+gmail_user = 'you@gmail.com'
+gmail_password = 'P@ssword!'
+server = None
+gmail_ok = False
+
+
+def email_connect():
+    global gmail_user, gmail_password, server
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.ehlo()
+        server.login(gmail_user, gmail_password)
+        gmail_ok = True
+    except:
+        print('Something went wrong...')
+
 
 def frame_diff(prev_frame, cur_frame, diff_thres=20):
 
@@ -11,14 +30,15 @@ def frame_diff(prev_frame, cur_frame, diff_thres=20):
         _diff = cv2.absdiff(prev_frame, cur_frame)
 
         diff = np.sum(_diff)/prev_frame.shape[0]/prev_frame.shape[1]/3.
-        print(diff)
 
         if diff > diff_thres:
+            print("big enough change")
             return True
         else:
             return False
 
 def main():
+    email_connect()
     while True:
         cap = cv2.VideoCapture(0)
 
@@ -53,8 +73,12 @@ def main():
         cap.release()
 
         if frame_diff(frame1, frame2):
-            print("threshold:")
-            cv2.imwrite('image_A.jpg', frame2)
+            timestr = time.strftime("%Y%m%d_%H%M%S")
+            cv2.imwrite(timestr, frame2)
+            if gmail_ok:
+                print("email")
+
+
 
         difference = cv2.subtract(frame1, frame2)
         frame3 = cv2.absdiff(frame1, frame2)
